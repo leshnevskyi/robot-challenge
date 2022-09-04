@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Robot.Common">
+      <HintPath>..\Tournament\Robot.Common.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
