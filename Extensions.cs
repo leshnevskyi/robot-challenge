@@ -4,7 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 namespace Leshnevskyi.Nazarii.RobotChallenge {
-	static class Extensions {
+	public static class Extensions {
 		public static int GetDistanceTo(this Position thisRosition, Position anotherPosition) {
 			return (int)Math.Sqrt(
 				Math.Pow(thisRosition.X - anotherPosition.X, 2) + Math.Pow(thisRosition.Y - anotherPosition.Y, 2)
@@ -12,24 +12,9 @@ namespace Leshnevskyi.Nazarii.RobotChallenge {
 		}
 
 		public static EnergyStation GetNearestStation(this Map map, Robot.Common.Robot robot) {
-			EnergyStation nearestStation = map.Stations.FirstOrDefault();
-
-			if (nearestStation == null) {
-				return null;
-			}
-
-			int nearestDistance = robot.Position.GetDistanceTo(nearestStation.Position);
-
-			foreach (EnergyStation energyStation in map.Stations) {
-				int distance = robot.Position.GetDistanceTo(energyStation.Position);
-
-				if (distance < nearestDistance) {
-					nearestStation = energyStation;
-					nearestDistance = distance;
-				}
-			}
-
-			return nearestStation;
+			return map.Stations
+				.OrderBy(station => station.Position.GetDistanceTo(robot.Position))
+				.FirstOrDefault();
 		}
 
 		public static int GetEnergyLossTo(this Robot.Common.Robot robot, Position toPosition) {
@@ -58,9 +43,9 @@ namespace Leshnevskyi.Nazarii.RobotChallenge {
 
 			Dictionary<Robot.Common.Robot, int> robotDistance = new Dictionary<Robot.Common.Robot, int>();
 
-			foreach (var currobot in robots) {
-				if (robot.OwnerName != Constants.AuthorName) { 
-					robotDistance.Add(robot, robot.Position.GetDistanceTo(robot.Position));
+			foreach (var currentRobot in robots) {
+				if (currentRobot.OwnerName != robot.OwnerName) { 
+					robotDistance.Add(currentRobot, robot.Position.GetDistanceTo(currentRobot.Position));
 				}
 			}
 
