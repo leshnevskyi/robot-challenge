@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Robot.Common;
 using System.Linq;
 
@@ -12,14 +11,9 @@ namespace Leshnevskyi.Nazarii.RobotChallenge {
 			var privateRobots = robots.Where(currRobot => currRobot.OwnerName == robot.OwnerName).ToList();
 			var nearestStation = map.GetNearestStation(robot);
 			var distanceToNearestStation = nearestStation.Position.GetDistanceTo(robot.Position);
-
-
 			var nearestRobots = robot.GetNearestEnemies(robots, Constants.TakeNearestRobot);
-			nearestRobots = nearestRobots
-					.OrderByDescending(x => x.Energy)
-					.ToList();
 
-			int energyFromFightEnemyRobot = 0;
+			int energyProfitForFight = 0;
 			Robot.Common.Robot robotToFight = null;
 
 			if (nearestRobots.Any()) {
@@ -28,30 +22,34 @@ namespace Leshnevskyi.Nazarii.RobotChallenge {
 
 					if (energyProfit < 0) continue;
 
-					if (energyProfit > energyFromFightEnemyRobot) {
-						energyFromFightEnemyRobot = energyProfit;
+					if (energyProfit > energyProfitForFight) {
+						energyProfitForFight = energyProfit;
 						robotToFight = currRobot;
 					}
 				}
 			}
 
+			var stationIsTakenByPrivateRobot = privateRobots.Any(currentRobot => 
+				currentRobot.Position.GetDistanceTo(nearestStation.Position) == 0
+			);
+
 			if (
-				privateRobots.Count == 100
+				privateRobots.Count == Constants.MaxPrivateRobotCount
 				&& robot.Position.GetDistanceTo(nearestStation.Position) != 0
-				&& !privateRobots.Any(r => r.Position.GetDistanceTo(nearestStation.Position) == 0)
+				&& !stationIsTakenByPrivateRobot
 			) {
 				return new MoveCommand() {NewPosition = nearestStation.Position};
 			}
 
-			return robot.Energy > Constants.EnergyNewRobotCreate && privateRobots.Count < 100
+			return robot.Energy > Constants.EnergyNewRobotCreate && privateRobots.Count < Constants.MaxPrivateRobotCount
 				? new CreateNewRobotCommand() {
 						NewRobotEnergy = Constants.EnergyNewRobot
 					}
 				: distanceToNearestStation < Constants.MaxDistanceToEnergyStation && nearestStation.Energy > 0
 				? (RobotCommand)new CollectEnergyCommand()
-				: energyFromFightEnemyRobot >= Constants.MinEnergyToFight && robotToFight != null
+				: energyProfitForFight >= Constants.MinEnergyProfitForFighting && robotToFight != null
 				? new MoveCommand() {NewPosition = robotToFight.Position}
-				: !privateRobots.Any(r => r.Position.GetDistanceTo(nearestStation.Position) == 0)
+				: !stationIsTakenByPrivateRobot
 				? new MoveCommand() {NewPosition = nearestStation.Position}
 				: new MoveCommand() {NewPosition = map.FindFreeCell(robot.Position, robots)};
 		}
